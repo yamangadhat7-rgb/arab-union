@@ -132,8 +132,9 @@ let save={wood:0,fish:0,coins:500};
 try{save={...save,...JSON.parse(localStorage.getItem('arab-union-demo-save')||'{}')}}catch{}
 let driving=false,carSpeed=0,carYaw=0,yaw=0,pitch=.24,third=true,running=false,jumping=false;
 const keys={},joy={x:0,y:0};
-addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(['w','a','s','d',' ','arrowup','arrowdown','arrowleft','arrowright'].includes(e.key.toLowerCase()))e.preventDefault();if(e.key.toLowerCase()==='e'&&!e.repeat)interact()});
-addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+function isTypingTarget(target){return target instanceof HTMLElement && (target.isContentEditable || ['INPUT','TEXTAREA','SELECT'].includes(target.tagName));}
+addEventListener('keydown',e=>{if(isTypingTarget(e.target))return;keys[e.key.toLowerCase()]=true;if(['w','a','s','d',' ','arrowup','arrowdown','arrowleft','arrowright'].includes(e.key.toLowerCase()))e.preventDefault();if(e.key.toLowerCase()==='e'&&!e.repeat)interact()});
+addEventListener('keyup',e=>{if(isTypingTarget(e.target))return;keys[e.key.toLowerCase()]=false;});
 const canvas=renderer.domElement;
 let drag=false,lx=0,ly=0;
 canvas.addEventListener('pointerdown',e=>{drag=true;lx=e.clientX;ly=e.clientY;canvas.setPointerCapture(e.pointerId)});
