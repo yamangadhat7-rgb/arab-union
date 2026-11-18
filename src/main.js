@@ -213,7 +213,7 @@ function animate(now){
     const attr=flag.geometry.attributes.position;
     for(let i=0;i<attr.count;i++){
       const x=flag.base[i*3],y=flag.base[i*3+1];
-      const wave=Math.sin(now*.0035-x*1.8+flag.phase+y*.35)*.24*(x/1.65+.15);
+      const wave=Math.sin(now*.0035-x*1.8+flag.phase+y*.35)*.28*Math.max(0,(x+1.65)/3.3);
       attr.setZ(i,flag.base[i*3+2]+wave);
     }
     attr.needsUpdate=true;flag.geometry.computeVertexNormals();
