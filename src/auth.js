@@ -28,7 +28,7 @@ shell.innerHTML = `
       <label>البريد الإلكتروني<input id="authEmail" type="email" autocomplete="email" placeholder="name@example.com" required></label>
       <label>كلمة المرور<input id="authPassword" type="password" autocomplete="current-password" minlength="8" placeholder="8 أحرف على الأقل" required></label>
       <div id="signupFields" hidden>
-        <label>اسم اللاعب<input id="authUsername" type="text" autocomplete="nickname" minlength="3" maxlength="20" pattern="[A-Za-z0-9_]+" placeholder="مثال: ArabPlayer"></label>
+        <label>اسم اللاعب<input id="authUsername" type="text" autocomplete="nickname" autocapitalize="off" spellcheck="false" inputmode="text" minlength="3" maxlength="20" pattern="[A-Za-z0-9_]+" placeholder="مثال: ArabPlayer"></label>
         <label>الدولة<select id="authCountry">${countries.map(([code,name])=>`<option value="${code}" ${code==='JO'?'selected':''}>${name}</option>`).join('')}</select></label>
       </div>
       <p id="authMessage" class="auth-message" role="status" aria-live="polite"></p>
@@ -45,6 +45,20 @@ shell.innerHTML = `
     </div>
   </section>`;
 document.body.append(shell);
+
+// Keep game shortcuts from ever consuming characters typed into account fields.
+shell.addEventListener('keydown', event => {
+  if (event.target instanceof Element && event.target.closest('input,select,textarea')) {
+    event.stopPropagation();
+    if (event.key === 'Enter' && event.target.tagName !== 'SELECT') {
+      event.preventDefault();
+      $('authSubmit')?.click();
+    }
+  }
+}, true);
+shell.addEventListener('keyup', event => {
+  if (event.target instanceof Element && event.target.closest('input,select,textarea')) event.stopPropagation();
+}, true);
 
 const openButton = document.createElement('button');
 openButton.id = 'accountBtn';
