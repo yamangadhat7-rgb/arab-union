@@ -19,7 +19,7 @@
 - عمليات الاقتصاد والمخزون والعقارات لم تُنفذ كعمليات خادم متكاملة؛ الرصيد الأولي فقط ينشأ تلقائياً عند التسجيل.
 - عناصر الخشب والسمك تحفظ محلياً فقط ولا تتزامن بين الأجهزة.
 - تم تفعيل workers.dev للنطاق `arab-union.arab-union-world.workers.dev` ونشر Worker يخدم index وملفات JS/CSS من GitHub main. تفعيل النطاق تحقق عبر Cloudflare API، لكن لم يتسنّ إجراء اختبار متصفح خارجي مستقل من بيئة الأدوات.
-- اجتاز GitHub Actions فحص صياغة JavaScript (`npm run check`) وبناء Vite (`npm run build`) بنجاح على commit `332be15c8fcc96354e331603b28a1f2f92acce9c`.
+- اجتاز GitHub Actions فحص صياغة JavaScript لملفي اللعبة والمصادقة (`npm run check`) وبناء Vite (`npm run build`) بنجاح على commit `62abbb2a02b09b4e4cb98a3431f5bef3f664233c`.
 
 ## ملاحظات الأمان المعروفة
 - Supabase Security Advisor أظهر تحذيراً واحداً على public.is_admin() لأنها SECURITY DEFINER ويمكن للمستخدم المسجل استدعاؤها. الدالة تعيد فقط نتيجة فحص دور المستخدم الحالي، وتُستخدم في سياسة قراءة admin_roles لتجنب recursion. يجب مراجعتها قبل توسيع صلاحيات الإدارة.
