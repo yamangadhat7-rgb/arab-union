@@ -168,7 +168,7 @@ let last=performance.now();
 function animate(now){
   requestAnimationFrame(animate);
   const dt=Math.min((now-last)/1000,.04);last=now;
-  const forward=(keys.w||keys.arrowup?-1:0)+(keys.s||keys.arrowdown?1:0)-joy.y;
+  const forward=(keys.w||keys.arrowup?-1:0)+(keys.s||keys.arrowdown?1:0)+joy.y;
   const sideways=(keys.d||keys.arrowright?1:0)+(keys.a||keys.arrowleft?-1:0)+joy.x;
   if(!driving){
     const moving=Math.hypot(forward,sideways)>.08;
