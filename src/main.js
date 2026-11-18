@@ -286,7 +286,9 @@ function animate(now){
   const target=new THREE.Vector3(focus.x,firstPerson?2.25:4.4,focus.z);
   if(firstPerson){
     const heading=(driving?carYaw:yaw)+Math.PI;
-    camera.position.lerp(new THREE.Vector3(focus.x,driving?2.0:2.15,focus.z),1-Math.pow(.001,dt));
+    const eyeX=focus.x+(driving?Math.sin(carYaw)*2.65:0);
+    const eyeZ=focus.z+(driving?Math.cos(carYaw)*2.65:0);
+    camera.position.lerp(new THREE.Vector3(eyeX,driving?2.0:2.15,eyeZ),1-Math.pow(.001,dt));
     camera.rotation.set(-.04,heading,0,'YXZ');
   } else if(cinematic){
     const heading=driving?carYaw:yaw;
