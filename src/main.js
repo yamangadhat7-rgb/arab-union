@@ -162,15 +162,15 @@ player.position.set(0,0,42);
 const car=new THREE.Group(); scene.add(car); car.position.set(9,.6,35);
 const carPaint=material(0x9b2e2d,.3,.45), rubber=material(0x151a20,.92), chrome=material(0xaeb8bd,.25,.8);
 const chassis=new THREE.Mesh(new THREE.BoxGeometry(3.5,.85,6.2),carPaint);chassis.position.y=.72;chassis.castShadow=true;car.add(chassis);
-const hood=new THREE.Mesh(new THREE.BoxGeometry(3.25,.28,1.6),carPaint);hood.position.set(0,1.22,-2.05);car.add(hood);
-const trunk=new THREE.Mesh(new THREE.BoxGeometry(3.2,.25,1.1),carPaint);trunk.position.set(0,1.2,2.45);car.add(trunk);
+const hood=new THREE.Mesh(new THREE.BoxGeometry(3.25,.28,1.6),carPaint);hood.position.set(0,1.22,2.05);car.add(hood);
+const trunk=new THREE.Mesh(new THREE.BoxGeometry(3.2,.25,1.1),carPaint);trunk.position.set(0,1.2,-2.45);car.add(trunk);
 const cabin=new THREE.Mesh(new THREE.BoxGeometry(2.72,1.18,2.85),mats.glass);cabin.position.set(0,1.72,-.15);cabin.castShadow=true;car.add(cabin);
 const roof=new THREE.Mesh(new THREE.BoxGeometry(2.5,.16,2.45),carPaint);roof.position.set(0,2.34,-.12);car.add(roof);
 for(const x of [-1.25,1.25]){
   const headlight=new THREE.Mesh(new THREE.BoxGeometry(.68,.24,.12),material(0xffedb2,.25));
-  headlight.position.set(x,1.0,-3.12);car.add(headlight);
+  headlight.position.set(x,1.0,3.12);car.add(headlight);
   const tail=new THREE.Mesh(new THREE.BoxGeometry(.62,.22,.12),material(0xc92323,.3));
-  tail.position.set(x,1.0,3.12);car.add(tail);
+  tail.position.set(x,1.0,-3.12);car.add(tail);
 }
 const carWheels=[];
 for(const x of [-1.72,1.72]) for(const z of [-2,2]){
@@ -178,9 +178,9 @@ for(const x of [-1.72,1.72]) for(const z of [-2,2]){
   const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.55,.55,.34,20),rubber);
   wheel.rotation.z=Math.PI/2;wheel.castShadow=true;pivot.add(wheel);
   const hub=new THREE.Mesh(new THREE.CylinderGeometry(.25,.25,.36,16),chrome);hub.rotation.z=Math.PI/2;pivot.add(hub);
-  carWheels.push({pivot,wheel,front:z<0});
+  carWheels.push({pivot,wheel,front:z>0});
 }
-for(const x of [-1,1]){const mirror=new THREE.Mesh(new THREE.BoxGeometry(.25,.2,.4),carPaint);mirror.position.set(x*1.55,1.75,-1.1);car.add(mirror);}
+for(const x of [-1,1]){const mirror=new THREE.Mesh(new THREE.BoxGeometry(.25,.2,.4),carPaint);mirror.position.set(x*1.55,1.75,1.1);car.add(mirror);}
 for(let z=-170;z<=170;z+=35) for(const x of [-19,19]){
   addCylinder(.12,.18,6,material(0x1b2830),x,3,z,8);
   addBox(.8,.12,.35,material(0xffe4a1),x+(x<0?.3:-.3),6,z,false);
@@ -285,7 +285,7 @@ function animate(now){
   const firstPerson=cameraMode===1,cinematic=cameraMode===2;
   const target=new THREE.Vector3(focus.x,firstPerson?2.25:4.4,focus.z);
   if(firstPerson){
-    const heading=driving?carYaw:yaw;
+    const heading=(driving?carYaw:yaw)+Math.PI;
     camera.position.lerp(new THREE.Vector3(focus.x,driving?2.0:2.15,focus.z),1-Math.pow(.001,dt));
     camera.rotation.set(-.04,heading,0,'YXZ');
   } else if(cinematic){
@@ -296,7 +296,7 @@ function animate(now){
   } else {
     const heading=driving?carYaw:yaw;
     const followDistance=driving?13:10;
-    camera.position.lerp(target.clone().add(new THREE.Vector3(Math.sin(heading)*followDistance,5+pitch*7,Math.cos(heading)*followDistance)),1-Math.pow(.001,dt));
+    camera.position.lerp(target.clone().add(new THREE.Vector3(-Math.sin(heading)*followDistance,5+pitch*7,-Math.cos(heading)*followDistance)),1-Math.pow(.001,dt));
     camera.lookAt(focus.x,2,focus.z);
   }
   homeRing.rotation.z=now*.0007;
