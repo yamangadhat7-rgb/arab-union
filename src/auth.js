@@ -33,7 +33,7 @@ shell.innerHTML = `
       </div>
       <p id="authMessage" class="auth-message" role="status" aria-live="polite"></p>
       <button id="authSubmit" class="auth-submit" type="button">تسجيل الدخول</button>
-      <button id="authSwitch" class="auth-switch" type="button">ليس لديك حساب؟ أنشئ حساباً</button>
+      <button id="authSwitch" class="auth-switch" type="button">ليس لديك حساب؟ أنشئ حساباً</button><button id="authForgot" class="auth-switch" type="button">نسيت كلمة المرور؟</button>
     </div>
     <div id="authAccount" hidden>
       <div class="auth-user-icon">✓</div>
@@ -108,6 +108,12 @@ openButton.addEventListener('click',async()=>{if(currentUser){await syncAccount(
 shell.querySelector('.auth-close').addEventListener('click',hideLayer);
 shell.querySelector('.auth-backdrop').addEventListener('click',hideLayer);
 $('authSwitch').addEventListener('click',()=>setMode(mode==='login'?'signup':'login'));
+$('authForgot').addEventListener('click',async()=>{
+  const email=$('authEmail').value.trim();
+  if(!email){message('أدخل بريدك الإلكتروني أولاً.','error');return;}
+  const {error}=await supabase.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin});
+  message(error?error.message:'إذا كان البريد مسجلاً، ستصلك رسالة لإعادة تعيين كلمة المرور.','success');
+});
 $('authSubmit').addEventListener('click',async()=>{
   const email=$('authEmail').value.trim();
   const password=$('authPassword').value;
@@ -119,7 +125,7 @@ $('authSubmit').addEventListener('click',async()=>{
       const username=$('authUsername').value.trim();
       const country_code=$('authCountry').value;
       if(!/^[A-Za-z0-9_]{3,20}$/.test(username)) throw new Error('اسم اللاعب يجب أن يكون 3–20 حرفاً إنجليزياً أو رقماً أو _.');
-      const {data,error}=await supabase.auth.signUp({email,password,options:{data:{username,country_code}}});
+      const {data,error}=await supabase.auth.signUp({email,password,options:{emailRedirectTo:window.location.origin,data:{username,country_code}}});
       if(error) throw error;
       if(data.session){
         message('تم إنشاء حسابك بنجاح. أهلاً بك!','success');
@@ -140,6 +146,7 @@ $('authLogout').addEventListener('click',async()=>{
   const {error}=await supabase.auth.signOut();
   if(error){$('authAccountNote').textContent=error.message;return;}
   await syncAccount(null);setMode('login');hideLayer();
+  document.querySelector('.wallet b').innerHTML='— <small>د.أ</small>';
   document.querySelector('.wallet em').textContent='سجّل الدخول لعرض رصيدك';
 });
 supabase.auth.onAuthStateChange((_event,session)=>{queueMicrotask(()=>syncAccount(session?.user||null));});
