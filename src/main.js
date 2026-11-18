@@ -53,11 +53,38 @@ addCylinder(8,8,.5,mats.gold,0,1.1,0,64);
 addCylinder(1.5,2.3,16,mats.white,0,9,0,12);
 const globe = new THREE.Mesh(new THREE.OctahedronGeometry(3),material(0xd8bd83,.35,.35));
 globe.position.set(0,18,0); scene.add(globe);
-const flagColors = [[0x111111,0xffffff,0x16834b],[0xce2028,0xffffff,0x16834b],[0x007a3d,0xffffff,0x111111],[0xce1126,0xffffff,0x111111],[0xd4af37,0xffffff,0x111111]];
+// Twenty-two distinct Arab-world flags, built as lightweight cloth meshes.
+const flagPalettes=[
+ ['#000000','#ffffff','#16834b'],['#ffffff','#16834b','#ffffff'],['#00732f','#ffffff','#000000'],
+ ['#ffffff','#ffffff','#8d153a'],['#007a3d','#ffffff','#000000'],['#ffffff','#ffffff','#ce1126'],
+ ['#ffffff','#d01c1f','#168a45'],['#ce1126','#ffffff','#000000'],['#ce1126','#ffffff','#000000'],
+ ['#168a45','#ffffff','#000000'],['#ce1126','#ffffff','#ce1126'],['#000000','#ffffff','#168a45'],
+ ['#ce1126','#ffffff','#000000'],['#ce1126','#ffffff','#000000'],['#e70013','#000000','#239e46'],
+ ['#ce1126','#ffffff','#ce1126'],['#168a45','#ffffff','#168a45'],['#c1272d','#c1272d','#c1272d'],
+ ['#006233','#006233','#006233'],['#4189dd','#4189dd','#4189dd'],['#6ab2e7','#ffffff','#62b521'],
+ ['#3a75c4','#ffffff','#d21034']
+];
+const flagCloths=[];
+function flagTexture(index){
+  const canvas=document.createElement('canvas');canvas.width=256;canvas.height=160;
+  const ctx=canvas.getContext('2d'),colors=flagPalettes[index];
+  colors.forEach((color,j)=>{ctx.fillStyle=color;ctx.fillRect(0,j*160/3,256,160/3+1)});
+  if([0,2,4,6,7,8,10,11,12,13,14,16,17,18,20,21].includes(index)){
+    ctx.fillStyle=index===0||index===11||index===12?'#ce1126':'#ce1126';
+    ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(86,80);ctx.lineTo(0,160);ctx.closePath();ctx.fill();
+  }
+  if(index===17){ctx.strokeStyle='#168a45';ctx.lineWidth=9;ctx.beginPath();ctx.arc(128,80,37,0,Math.PI*2);ctx.stroke();}
+  if(index===19){ctx.fillStyle='#ffffff';ctx.beginPath();ctx.arc(128,80,25,0,Math.PI*2);ctx.fill();}
+  if(index===15){ctx.fillStyle='#ce1126';ctx.beginPath();ctx.arc(128,80,43,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(137,77,25,0,Math.PI*2);ctx.fill();ctx.fillStyle='#ce1126';ctx.font='bold 28px sans-serif';ctx.fillText('★',137,90);}
+  const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;return texture;
+}
 for(let i=0;i<22;i++){
   const a=i/22*Math.PI*2,x=Math.cos(a)*26,z=Math.sin(a)*26;
   addCylinder(.09,.12,9,material(0xd7d8d4,.3,.7),x,4.7,z,8);
-  for(let j=0;j<3;j++) addBox(3.3,.72,.07,material(flagColors[i%flagColors.length][j]),x+1.55,7.3-j*.74,z,false);
+  const geometry=new THREE.PlaneGeometry(3.3,2.1,20,12);
+  const cloth=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial({map:flagTexture(i),side:THREE.DoubleSide,roughness:.88}));
+  cloth.position.set(x+1.65,8.0,z);cloth.rotation.y=-a*.35;scene.add(cloth);
+  flagCloths.push({geometry,base:geometry.attributes.position.array.slice(),phase:i*.47});
 }
 
 // Residential districts, royal palace, palms and forest.
@@ -132,9 +159,23 @@ let save={wood:0,fish:0,coins:500};
 try{save={...save,...JSON.parse(localStorage.getItem('arab-union-demo-save')||'{}')}}catch{}
 let driving=false,carSpeed=0,carYaw=0,yaw=0,pitch=.24,third=true,running=false,jumping=false;
 const keys={},joy={x:0,y:0};
-function isTypingTarget(target){return target instanceof HTMLElement && (target.isContentEditable || ['INPUT','TEXTAREA','SELECT'].includes(target.tagName));}
-addEventListener('keydown',e=>{if(isTypingTarget(e.target))return;keys[e.key.toLowerCase()]=true;if(['w','a','s','d',' ','arrowup','arrowdown','arrowleft','arrowright'].includes(e.key.toLowerCase()))e.preventDefault();if(e.key.toLowerCase()==='e'&&!e.repeat)interact()});
-addEventListener('keyup',e=>{if(isTypingTarget(e.target))return;keys[e.key.toLowerCase()]=false;});
+function isTypingTarget(target){
+  return target instanceof Element && (target.isContentEditable || !!target.closest('input,textarea,select,[contenteditable="true"]'));
+}
+function gameInputBlocked(event){
+  const auth=document.querySelector('#authLayer');
+  return isTypingTarget(event.target) || isTypingTarget(document.activeElement) || !!auth?.classList.contains('visible');
+}
+addEventListener('keydown',e=>{
+  if(gameInputBlocked(e))return;
+  const key=e.key.toLowerCase(); keys[key]=true;
+  if(['w','a','s','d',' ','arrowup','arrowdown','arrowleft','arrowright'].includes(key))e.preventDefault();
+  if(key==='e'&&!e.repeat)interact();
+});
+addEventListener('keyup',e=>{
+  if(gameInputBlocked(e)){ keys[e.key.toLowerCase()]=false; return; }
+  keys[e.key.toLowerCase()]=false;
+});
 const canvas=renderer.domElement;
 let drag=false,lx=0,ly=0;
 canvas.addEventListener('pointerdown',e=>{drag=true;lx=e.clientX;ly=e.clientY;canvas.setPointerCapture(e.pointerId)});
@@ -168,6 +209,15 @@ let last=performance.now();
 function animate(now){
   requestAnimationFrame(animate);
   const dt=Math.min((now-last)/1000,.04);last=now;
+  for(const flag of flagCloths){
+    const attr=flag.geometry.attributes.position;
+    for(let i=0;i<attr.count;i++){
+      const x=flag.base[i*3],y=flag.base[i*3+1];
+      const wave=Math.sin(now*.0035-x*1.8+flag.phase+y*.35)*.24*(x/1.65+.15);
+      attr.setZ(i,flag.base[i*3+2]+wave);
+    }
+    attr.needsUpdate=true;flag.geometry.computeVertexNormals();
+  }
   const forward=(keys.w||keys.arrowup?-1:0)+(keys.s||keys.arrowdown?1:0)+joy.y;
   const sideways=(keys.d||keys.arrowright?1:0)+(keys.a||keys.arrowleft?-1:0)+joy.x;
   if(!driving){
