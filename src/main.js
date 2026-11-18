@@ -87,6 +87,25 @@ for(let i=0;i<22;i++){
   flagCloths.push({geometry,base:geometry.attributes.position.array.slice(),phase:i*.47});
 }
 
+// A clearly marked player home and instant travel point.
+const homePosition=new THREE.Vector3(142,0,82);
+const homeGroup=new THREE.Group();scene.add(homeGroup);homeGroup.position.copy(homePosition);
+const homeWall=material(0xe7d8bd),homeTrim=material(0x9a7045),homeDoor=material(0x513b2c);
+const homeBase=new THREE.Mesh(new THREE.BoxGeometry(17,.5,14),mats.stone);homeBase.position.y=.25;homeGroup.add(homeBase);
+const homeBody=new THREE.Mesh(new THREE.BoxGeometry(14,7,11),homeWall);homeBody.position.y=4;homeBody.castShadow=true;homeGroup.add(homeBody);
+const homeRoof=new THREE.Mesh(new THREE.ConeGeometry(10,4,4),homeTrim);homeRoof.position.set(0,9.5,0);homeRoof.rotation.y=Math.PI/4;homeGroup.add(homeRoof);
+const homeDoorMesh=new THREE.Mesh(new THREE.BoxGeometry(2.2,4,.2),homeDoor);homeDoorMesh.position.set(0,2.25,5.61);homeGroup.add(homeDoorMesh);
+for(const x of [-4.5,4.5]){const win=new THREE.Mesh(new THREE.BoxGeometry(2.3,2,.16),mats.glass);win.position.set(x,4.3,5.58);homeGroup.add(win);}
+const homeRing=new THREE.Mesh(new THREE.TorusGeometry(5.5,.18,10,48),material(0xe8c66e,.35,.5));homeRing.rotation.x=Math.PI/2;homeRing.position.y=.65;homeGroup.add(homeRing);
+const beacon=new THREE.Mesh(new THREE.CylinderGeometry(.08,.08,10,8),material(0xffd66e,.3,.4));beacon.position.y=14;homeGroup.add(beacon);
+const beaconLight=new THREE.PointLight(0xffd477,35,34);beaconLight.position.y=13;homeGroup.add(beaconLight);
+const signCanvas=document.createElement('canvas');signCanvas.width=512;signCanvas.height=128;
+const signCtx=signCanvas.getContext('2d');signCtx.fillStyle='#102b3b';signCtx.fillRect(0,0,512,128);signCtx.strokeStyle='#e8c66e';signCtx.lineWidth=8;signCtx.strokeRect(5,5,502,118);
+signCtx.fillStyle='#fff0c8';signCtx.font='bold 48px sans-serif';signCtx.textAlign='center';signCtx.fillText('بيتي  •  HOME',256,82);
+const signTex=new THREE.CanvasTexture(signCanvas);signTex.colorSpace=THREE.SRGBColorSpace;
+const sign=new THREE.Mesh(new THREE.PlaneGeometry(12,3),new THREE.MeshBasicMaterial({map:signTex,transparent:true,side:THREE.DoubleSide}));
+sign.position.set(0,11,6.2);homeGroup.add(sign);
+
 // Residential districts, royal palace, palms and forest.
 const buildingMats=[0xd9c6a4,0xcab596,0xe0d3bc,0xb9a88e,0xd6c4a5].map(c=>material(c));
 function building(x,z,w,d,h,k=0){
@@ -139,16 +158,29 @@ for(const side of [-1,1]){
 }
 player.position.set(0,0,42);
 
-// Driveable starter vehicle.
+// Improved starter vehicle: detailed body, lights, steering and animated wheels.
 const car=new THREE.Group(); scene.add(car); car.position.set(9,.6,35);
-const chassis=new THREE.Mesh(new THREE.BoxGeometry(3.5,1,6),material(0x9b2e2d,.35,.35));
-chassis.position.y=.65; car.add(chassis);
-const cabin=new THREE.Mesh(new THREE.BoxGeometry(2.8,1.1,2.8),mats.glass);
-cabin.position.set(0,1.55,-.2); car.add(cabin);
-for(const x of [-1.65,1.65]) for(const z of [-1.9,1.9]){
-  const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.52,.52,.3,16),material(0x1b2830));
-  wheel.rotation.z=Math.PI/2; wheel.position.set(x,.45,z); car.add(wheel);
+const carPaint=material(0x9b2e2d,.3,.45), rubber=material(0x151a20,.92), chrome=material(0xaeb8bd,.25,.8);
+const chassis=new THREE.Mesh(new THREE.BoxGeometry(3.5,.85,6.2),carPaint);chassis.position.y=.72;chassis.castShadow=true;car.add(chassis);
+const hood=new THREE.Mesh(new THREE.BoxGeometry(3.25,.28,1.6),carPaint);hood.position.set(0,1.22,-2.05);car.add(hood);
+const trunk=new THREE.Mesh(new THREE.BoxGeometry(3.2,.25,1.1),carPaint);trunk.position.set(0,1.2,2.45);car.add(trunk);
+const cabin=new THREE.Mesh(new THREE.BoxGeometry(2.72,1.18,2.85),mats.glass);cabin.position.set(0,1.72,-.15);cabin.castShadow=true;car.add(cabin);
+const roof=new THREE.Mesh(new THREE.BoxGeometry(2.5,.16,2.45),carPaint);roof.position.set(0,2.34,-.12);car.add(roof);
+for(const x of [-1.25,1.25]){
+  const headlight=new THREE.Mesh(new THREE.BoxGeometry(.68,.24,.12),material(0xffedb2,.25));
+  headlight.position.set(x,1.0,-3.12);car.add(headlight);
+  const tail=new THREE.Mesh(new THREE.BoxGeometry(.62,.22,.12),material(0xc92323,.3));
+  tail.position.set(x,1.0,3.12);car.add(tail);
 }
+const carWheels=[];
+for(const x of [-1.72,1.72]) for(const z of [-2,2]){
+  const pivot=new THREE.Group();pivot.position.set(x,.48,z);car.add(pivot);
+  const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.55,.55,.34,20),rubber);
+  wheel.rotation.z=Math.PI/2;wheel.castShadow=true;pivot.add(wheel);
+  const hub=new THREE.Mesh(new THREE.CylinderGeometry(.25,.25,.36,16),chrome);hub.rotation.z=Math.PI/2;pivot.add(hub);
+  carWheels.push({pivot,wheel,front:z<0});
+}
+for(const x of [-1,1]){const mirror=new THREE.Mesh(new THREE.BoxGeometry(.25,.2,.4),carPaint);mirror.position.set(x*1.55,1.75,-1.1);car.add(mirror);}
 for(let z=-170;z<=170;z+=35) for(const x of [-19,19]){
   addCylinder(.12,.18,6,material(0x1b2830),x,3,z,8);
   addBox(.8,.12,.35,material(0xffe4a1),x+(x<0?.3:-.3),6,z,false);
@@ -157,7 +189,10 @@ for(let z=-170;z<=170;z+=35) for(const x of [-19,19]){
 // Local demo progress only. Online accounts and server-authoritative economy are not wired yet.
 let save={wood:0,fish:0,coins:500};
 try{save={...save,...JSON.parse(localStorage.getItem('arab-union-demo-save')||'{}')}}catch{}
-let driving=false,carSpeed=0,carYaw=0,yaw=0,pitch=.24,third=true,running=false,jumping=false;
+let driving=false,carSpeed=0,carYaw=0,yaw=0,pitch=.24,cameraMode=0,running=false,jumping=false;
+const cameraModes=['كاميرا خلفية','كاميرا الشخص الأول','كاميرا سينمائية'];
+function cycleCamera(){cameraMode=(cameraMode+1)%cameraModes.length;document.querySelector('#cameraLabel').textContent=cameraModes[cameraMode];document.querySelector('#cameraBtn').title=cameraModes[cameraMode];}
+
 const keys={},joy={x:0,y:0};
 function isTypingTarget(target){
   return target instanceof Element && (target.isContentEditable || !!target.closest('input,textarea,select,[contenteditable="true"]'));
@@ -181,8 +216,9 @@ let drag=false,lx=0,ly=0;
 canvas.addEventListener('pointerdown',e=>{drag=true;lx=e.clientX;ly=e.clientY;canvas.setPointerCapture(e.pointerId)});
 canvas.addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-lx,dy=e.clientY-ly;lx=e.clientX;ly=e.clientY;yaw-=dx*.004;pitch=THREE.MathUtils.clamp(pitch+dy*.003,-.05,.8)});
 canvas.addEventListener('pointerup',()=>drag=false);
-document.querySelector('#cameraBtn').onclick=()=>{third=!third};
-document.querySelector('#cameraLabel').onclick=()=>{third=!third};
+document.querySelector('#cameraBtn').onclick=cycleCamera;
+document.querySelector('#cameraLabel').onclick=cycleCamera;
+document.querySelector('#homeBtn').onclick=()=>{if(driving){driving=false;player.visible=true;}player.position.set(homePosition.x,0,homePosition.z+7);yaw=Math.PI;cameraMode=0;document.querySelector('#cameraLabel').textContent=cameraModes[cameraMode];};
 document.querySelector('#runBtn').onpointerdown=()=>running=true;
 document.querySelector('#runBtn').onpointerup=()=>running=false;
 document.querySelector('#jumpBtn').onclick=jump;
@@ -232,23 +268,39 @@ function animate(now){
       body.position.y=1.45+Math.sin(now*.012)*.045;
     }
   } else {
-    const steer=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);
-    carYaw+=steer*dt*1.8;
-    const throttle=(keys.w||keys.arrowup?1:0)-(keys.s||keys.arrowdown?1:0);
-    carSpeed=THREE.MathUtils.damp(carSpeed,throttle*24,2.2,dt);
+    const steer=THREE.MathUtils.clamp((keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0)+joy.x,-1,1);
+    const throttle=THREE.MathUtils.clamp((keys.w||keys.arrowup?1:0)-(keys.s||keys.arrowdown?1:0)-joy.y,-1,1);
+    const targetSpeed=throttle>=0?throttle*29:throttle*13;
+    carSpeed=THREE.MathUtils.damp(carSpeed,targetSpeed,throttle===0?3.4:2.0,dt);
+    carYaw+=steer*dt*(.55+Math.min(Math.abs(carSpeed)/12,1.4))*(carSpeed<0?-1:1);
     car.rotation.y=carYaw;
-    car.position.x+=Math.sin(carYaw)*carSpeed*dt;
-    car.position.z+=Math.cos(carYaw)*carSpeed*dt;
+    car.position.x=THREE.MathUtils.clamp(car.position.x+Math.sin(carYaw)*carSpeed*dt,-310,310);
+    car.position.z=THREE.MathUtils.clamp(car.position.z+Math.cos(carYaw)*carSpeed*dt,-340,340);
+    for(const w of carWheels){w.wheel.rotation.x-=carSpeed*dt/0.55;if(w.front)w.pivot.rotation.y=steer*.42;}
     player.position.copy(car.position);
   }
   player.position.x=THREE.MathUtils.clamp(player.position.x,-300,300);
   player.position.z=THREE.MathUtils.clamp(player.position.z,-330,330);
   const focus=driving?car.position:player.position;
-  const target=new THREE.Vector3(focus.x,third?4.4:2.1,focus.z);
-  if(third){
-    camera.position.lerp(target.clone().add(new THREE.Vector3(Math.sin(yaw)*10,5+pitch*7,Math.cos(yaw)*10)),1-Math.pow(.001,dt));
+  const firstPerson=cameraMode===1,cinematic=cameraMode===2;
+  const target=new THREE.Vector3(focus.x,firstPerson?2.25:4.4,focus.z);
+  if(firstPerson){
+    const heading=driving?carYaw:yaw;
+    camera.position.lerp(new THREE.Vector3(focus.x,driving?2.0:2.15,focus.z),1-Math.pow(.001,dt));
+    camera.rotation.set(-.04,heading,0,'YXZ');
+  } else if(cinematic){
+    const heading=driving?carYaw:yaw;
+    const orbit=now*.00012;
+    camera.position.lerp(new THREE.Vector3(focus.x+Math.sin(orbit)*17,13+pitch*4,focus.z+Math.cos(orbit)*17),1-Math.pow(.003,dt));
+    camera.lookAt(focus.x,1.8,focus.z);
+  } else {
+    const heading=driving?carYaw:yaw;
+    const followDistance=driving?13:10;
+    camera.position.lerp(target.clone().add(new THREE.Vector3(Math.sin(heading)*followDistance,5+pitch*7,Math.cos(heading)*followDistance)),1-Math.pow(.001,dt));
     camera.lookAt(focus.x,2,focus.z);
-  } else {camera.position.copy(target);camera.rotation.set(pitch,yaw,0,'YXZ')}
+  }
+  homeRing.rotation.z=now*.0007;
+  beacon.scale.y=1+Math.sin(now*.004)*.12;
   const distance=Math.hypot(player.position.x,player.position.z);
   document.querySelector('#locationName').textContent=distance<45?'ساحة الاتحاد':player.position.z < -285?'واجهة البحر':player.position.x < -120?'الغابة العربية':player.position.z < -50&&player.position.x>55?'القصر الملكي':'الحي السكني';
   const nearCar=player.position.distanceTo(car.position)<12;
