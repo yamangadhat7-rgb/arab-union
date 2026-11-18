@@ -1,5 +1,4 @@
-import * as THREE from 'three';
-import './style.css';
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
 
 const root = document.querySelector('#world');
 const scene = new THREE.Scene();
